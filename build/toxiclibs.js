@@ -15550,6 +15550,7 @@ var	VerletParticle2D = function(x,y,w){
 	this.temp = new Vec2D();
 	w = w || 1;
 	this.setWeight(w);
+	this.tag = null;
 };
 
 internals.extend(VerletParticle2D,Vec2D);
@@ -15688,6 +15689,14 @@ VerletParticle2D.prototype.update = function(){
 		})();
 		this.applyConstraints();
 	}
+};
+
+VerletParticle2D.prototype.setTag = function(t) {
+	this.tag = t;
+};
+
+VerletParticle2D.prototype.getTag = function() {
+	return this.tag;
 };
 
 module.exports = VerletParticle2D;
@@ -16264,10 +16273,19 @@ var	AttractionBehavior = function(attractor,radius,strength,jitter){
 	this.attractor = attractor;
 	this.strength = strength;
 	this.setRadius(radius);
+	this.affects = null;
 };
 
 AttractionBehavior.prototype = {
 	applyBehavior: function(p){ //apply() is reserved, so this is now applyBehavior
+
+		if(p.tag && this.affects) {
+			var idx = this.affects.indexOf(p.tag);
+			if (idx <= -1) {
+				return;
+			}
+		}
+
 		var delta = this.attractor.sub(p);
 		var dist = delta.magSquared();
 		if(dist < this.radiusSquared){
@@ -16313,6 +16331,22 @@ AttractionBehavior.prototype = {
 	setStrength: function(strength){
 		this.strength = strength;
 		this.attrStrength = strength * this.timeStep;
+	},
+
+	addAffects: function(tag) {
+		if(!this.affects) {
+			this.affects = new Array();
+		}
+		this.affects.push(tag);
+	},
+
+	removeAffects: function(tag) {
+		if(this.affects) {
+			var i = this.affects.indexOf(tag);
+			if(i > -1) {
+				return this.affects.splice(i,1)[0];
+			}
+		}
 	}
 };
 
